@@ -8,7 +8,7 @@ using namespace std;
 
 int main()
 {
-    Owner owner("Angelo Abreu Zua", 123654789);
+    Owner owner("Angelo Abreu", 123654789);
 
     Property* apartment = new Apartment(100000, 80);
     Property*  car = new Car(30000, 150);
