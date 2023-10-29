@@ -11,16 +11,16 @@ class Owner
 public:
     string fullName;
     int INN;
-    vector<Property*> properties;
+    vector<Property&> properties;
     Owner(string fullname, int inn) : fullName(fullname), INN(inn){}
 
     // add uma propriedade
-    void addProperty(Property* property){
+    void addProperty(Property& property){
         properties.push_back(property);
     }
 
     // metodo para apagar
-    bool removeProperty(Property* property){
+    bool removeProperty(Property& property){
         // usando um interador para achar a propriedade a ser removida
         for (auto i = properties.begin(); i != properties.end(); ++i)
         {
@@ -51,7 +51,7 @@ public:
     // metodo para calcular o imposto total
     double calculateTotalPropertyTax() const {
         double totalTax =0;
-        for (const Property* property : properties)
+        for (const Property& property : properties)
         {
             totalTax += property->calculatePropertyTax();
         }
@@ -61,7 +61,7 @@ public:
     //mostrar todas as propriedades do proprietario
     void showAllProperties() const {
         cout << "Properties of "<< this->fullName <<"[INN{"<<INN<<"}]: " <<endl;
-        for (Property* property : properties)
+        for (Property& property : properties)
         {
             cout << "- Worth: $" <<property->getWorth() << endl;
         }
@@ -69,7 +69,7 @@ public:
     }
 
     ~Owner(){
-        for (Property* property:properties)
+        for (Property& property:properties)
         {
             delete property;
         }

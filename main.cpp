@@ -10,13 +10,13 @@ int main()
 {
     Owner owner("Angelo Abreu", 123654789);
 
-    Property* apartment = new Apartment(100000, 80);
-    Property*  car = new Car(30000, 150);
-    Property*  house =new CountryHouse(300000, 50);
+    Apartment apartment(100000,80);
+    Car car(30000,150);
+    CountryHouse house(300000, 50);
 
-    owner.addProperty(apartment);
-    owner.addProperty(car);
-    owner.addProperty(house);
+    owner.addProperty(&apartment);
+    owner.addProperty(&car);
+    owner.addProperty(&house);
 
     owner.showAllProperties();
 
