@@ -1,3 +1,5 @@
+#ifndef TAX_RATE
+#define TAX_RATE
 #include <iostream>
 
 namespace TAX_RATES
@@ -18,3 +20,5 @@ namespace TAX_RATES
     const double LIMIT_DISTANCE_FROM_CITY = 30;
     const double LIMIT_APPARTMENT_SQUARE = 100; 
 }
+
+#endif
