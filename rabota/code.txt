@@ -1,0 +1,606 @@
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+class IJsonIO {
+public:
+    virtual void fromJson(const json& jsonObject) = 0;
+    virtual json toJson() const = 0;
+    virtual ~IJsonIO() {}
+};
+
+class Property : public IJsonIO {
+protected:
+    double worth;
+
+public:
+    Property(double worth) : worth(worth) {}
+
+    virtual double calculatePropertyTax() const = 0;
+
+    double calculateIncomeTax() const {
+        return 0.13 * worth;
+    }
+
+    virtual void fromJson(const json& jsonObject) {
+        worth = jsonObject["worth"];
+    }
+
+    virtual json toJson() const {
+        return {
+            {"worth", worth},
+            {"property_tax", calculatePropertyTax()},
+            {"income_tax", calculateIncomeTax()}
+        };
+    }
+};
+
+class Apartment : public Property {
+private:
+    double square;
+
+public:
+    Apartment(double worth, double square) : Property(worth), square(square) {}
+
+    double calculatePropertyTax() const override {
+        return 0.02 * square;
+    }
+
+    void fromJson(const json& jsonObject) override {
+        Property::fromJson(jsonObject);
+        square = jsonObject["square"];
+    }
+
+    json toJson() const override {
+        json propertyJson = Property::toJson();
+        propertyJson["square"] = square;
+        return propertyJson;
+    }
+};
+
+class Car : public Property {
+private:
+    double horsepower;
+
+public:
+    Car(double worth, double horsepower) : Property(worth), horsepower(horsepower) {}
+
+    double calculatePropertyTax() const override {
+        return 0.05 * horsepower;
+    }
+
+    void fromJson(const json& jsonObject) override {
+        Property::fromJson(jsonObject);
+        horsepower = jsonObject["horsepower"];
+    }
+
+    json toJson() const override {
+        json propertyJson = Property::toJson();
+        propertyJson["horsepower"] = horsepower;
+        return propertyJson;
+    }
+};
+
+class CountryHouse : public Property {
+private:
+    double distanceFromCity;
+
+public:
+    CountryHouse(double worth, double distanceFromCity) : Property(worth), distanceFromCity(distanceFromCity) {}
+
+    double calculatePropertyTax() const override {
+        return 0.01 * distanceFromCity;
+    }
+
+    void fromJson(const json& jsonObject) override {
+        Property::fromJson(jsonObject);
+        distanceFromCity = jsonObject["distanceFromCity"];
+    }
+
+    json toJson() const override {
+        json propertyJson = Property::toJson();
+        propertyJson["distanceFromCity"] = distanceFromCity;
+        return propertyJson;
+    }
+};
+
+class Owner : public IJsonIO {
+private:
+    std::string fullName;
+    std::string inn;
+    std::vector<Property*> properties;
+
+public:
+    Owner(const std::string& fullName, const std::string& inn) : fullName(fullName), inn(inn) {}
+
+    const std::string& getFullName() const {
+        return fullName;
+    }
+
+    const std::string& getINN() const {
+        return inn;
+    }
+
+    void addProperty(Property* property) {
+        properties.push_back(property);
+    }
+
+    void removeProperty(Property* property) {
+        for (auto it = properties.begin(); it != properties.end(); ++it) {
+            if (*it == property) {
+                properties.erase(it);
+                break;
+            }
+        }
+    }
+
+    double calculateTotalPropertyTax() const {
+        double totalTax = 0.0;
+        for (const Property* property : properties) {
+            totalTax += property->calculatePropertyTax();
+        }
+        return totalTax;
+    }
+
+    void fromJson(const json& jsonObject) override {
+        fullName = jsonObject["fullName"];
+        inn = jsonObject["inn"];
+        properties.clear();
+
+        const json& propertiesArray = jsonObject["properties"];
+        for (const json& propertyJson : propertiesArray) {
+            std::string propertyType = propertyJson["type"];
+            if (propertyType == "Apartment") {
+                Apartment* apartment = new Apartment(0, 0);
+                apartment->fromJson(propertyJson);
+                properties.push_back(apartment);
+            } else if (propertyType == "Car") {
+                Car* car = new Car(0, 0);
+                car->fromJson(propertyJson);
+                properties.push_back(car);
+            } else if (propertyType == "CountryHouse") {
+                CountryHouse* countryHouse = new CountryHouse(0, 0);
+                countryHouse->fromJson(propertyJson);
+                properties.push_back(countryHouse);
+            }
+        }
+    }
+
+    json toJson() const override {
+        json ownerJson = {
+            {"fullName", fullName},
+            {"inn", inn},
+            {"total_property_tax", calculateTotalPropertyTax()},
+            {"properties", json::array()}
+        };
+
+        json& propertiesArray = ownerJson["properties"];
+        for (const Property* property : properties) {
+            propertiesArray.push_back(property->toJson());
+        }
+
+        return ownerJson;
+    }
+
+    ~Owner() {
+        for (Property* property : properties) {
+            delete property;
+        }
+    }
+};
+
+int main() {
+    // Создаем объекты собственности
+    Apartment apartment(100000, 80);
+    Car car(20000, 150);
+    CountryHouse countryHouse(150000, 30);
+
+    // Создаем собственника и добавляем собственность
+    Owner owner("Иванов Иван Иванович", "123456789012");
+    owner.addProperty(&apartment);
+    owner.addProperty(&car);
+    owner.addProperty(&countryHouse);
+
+    // Создаем JSON-объект для собственника
+    json ownerJson = owner.toJson();
+
+    // Выводим JSON-объект с данными собственника и его собственности
+    std::cout << ownerJson.dump(2) << std::endl;
+
+    // Записываем JSON-объект в файл
+    std::ofstream file("owner_data.json");
+    file << ownerJson.dump(2);
+    file.close();
+
+    return 0;
+}
+
+
+________________________________________________________________________
+class Apartment : public Property {
+    // ...
+    void fromJson(const json& jsonObject) override {
+        Property::fromJson(jsonObject);
+        square = jsonObject["square"];
+    }
+    // ...
+};
+
+class Car : public Property {
+    // ...
+    void fromJson(const json& jsonObject) override {
+        Property::fromJson(jsonObject);
+        horsepower = jsonObject["horsepower"];
+    }
+    // ...
+};
+
+class CountryHouse : public Property {
+    // ...
+    void fromJson(const json& jsonObject) override {
+        Property::fromJson(jsonObject);
+        distanceFromCity = jsonObject["distanceFromCity"];
+    }
+    // ...
+};
+________________________________________________________________________
+
+class PropertyFactoryMethod {
+public:
+    static Property* getProperty(const std::string& key) {
+        if (key == "Apartment") {
+            return new Apartment(0, 0);
+        } else if (key == "Car") {
+            return new Car(0, 0);
+        } else if (key == "CountryHouse") {
+            return new CountryHouse(0, 0);
+        }
+        return nullptr; // Handle unknown property type
+    }
+};
+
+
+________________________________________________________________________
+
+void fromJson(const json& jsonObject) override {
+    fullName = jsonObject["fullName"];
+    inn = jsonObject["inn"];
+    properties.clear();
+
+    const json& propertiesArray = jsonObject["properties"];
+    for (const json& propertyJson : propertiesArray) {
+        std::string propertyType = propertyJson["type"];
+        Property* property = PropertyFactoryMethod::getProperty(propertyType);
+
+        if (property) {
+            property->fromJson(propertyJson);
+            properties.push_back(property);
+        } else {
+            std::cerr << "Unknown property type: " << propertyType << std::endl;
+        }
+    }
+}
+________________________________________________________________________
+
+int main() {
+    std::string inputFileName, outputFileName;
+    std::cout << "Enter the input JSON file name: ";
+    std::cin >> inputFileName;
+    std::cout << "Enter the output JSON file name: ";
+    std::cin >> outputFileName;
+
+    // Load JSON data from the input file
+    json inputJson;
+    std::ifstream inputFile(inputFileName);
+    inputFile >> inputJson;
+    inputFile.close();
+
+    // Create and populate an Owner object from the input JSON
+    Owner owner("Default Name", "000000000000");
+    owner.fromJson(inputJson);
+
+    // Calculate total property tax
+    double totalPropertyTax = owner.calculateTotalPropertyTax();
+
+    // Create a JSON object to store the results
+    json outputJson = owner.toJson();
+    outputJson["total_property_tax"] = totalPropertyTax;
+
+    // Write the results to the output JSON file
+    std::ofstream outputFile(outputFileName);
+    outputFile << outputJson.dump(2);
+    outputFile.close();
+
+    std::cout << "Results saved to " << outputFileName << std::endl;
+
+    return 0;
+}
+
+________________________________________________________________________
+void fromJson(const json& jsonObject) override {
+    fullName = jsonObject["fullName"];
+    inn = jsonObject["inn"];
+    properties.clear();
+
+    const json& propertiesArray = jsonObject["properties"];
+    for (const json& propertyJson : propertiesArray) {
+        std::string propertyType = propertyJson["type"];
+        Property* property = PropertyFactoryMethod::getProperty(propertyType);
+
+        if (property) {
+            property->fromJson(propertyJson);
+            properties.push_back(property);
+        } else {
+            std::cerr << "Неизвестный тип собственности: " << propertyType << std::endl;
+        }
+    }
+}
+________________________________________________________________________
+
+#include <iostream>
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+// ... Ваши классы Property, Apartment, Car, CountryHouse, Owner и PropertyFactoryMethod ...
+
+int main() {
+    std::string inputFileName, outputFileName;
+    std::cout << "Введите имя входного JSON-файла: ";
+    std::cin >> inputFileName;
+    std::cout << "Введите имя выходного JSON-файла: ";
+    std::cin >> outputFileName;
+
+    // Загрузка JSON-данных из входного файла
+    json inputJson;
+    std::ifstream inputFile(inputFileName);
+    inputFile >> inputJson;
+    inputFile.close();
+
+    // Создание и заполнение объекта Owner из входного JSON
+    Owner owner("Default Name", "000000000000");
+    owner.fromJson(inputJson);
+
+    // Расчет общего налога на имущество
+    double totalPropertyTax = owner.calculateTotalPropertyTax();
+
+    // Создание JSON-объекта для хранения результатов
+    json outputJson = owner.toJson();
+    outputJson["total_property_tax"] = totalPropertyTax;
+
+    // Запись результатов в выходной JSON-файл
+    std::ofstream outputFile(outputFileName);
+    outputFile << outputJson.dump(2);
+    outputFile.close();
+
+    std::cout << "Результаты сохранены в файл " << outputFileName << std::endl;
+
+    return 0;
+}
+
+
+________________________________________________________________________
+
+#include <iostream>
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+// Ваши классы Property, Apartment, Car, CountryHouse, Owner и PropertyFactoryMethod...
+
+class TaxService {
+public:
+    static void calculateTaxes(const std::string& inputFileName, const std::string& outputFileName) {
+        // Загрузка JSON-данных из входного файла
+        json inputJson;
+        std::ifstream inputFile(inputFileName);
+        inputFile >> inputJson;
+        inputFile.close();
+
+        // Создание объектов Owner из входного JSON
+        std::vector<Owner> owners;
+        for (const auto& ownerJson : inputJson) {
+            Owner owner("Default Name", "000000000000");
+            owner.fromJson(ownerJson);
+            owners.push_back(owner);
+        }
+
+        // Расчет общего налога на имущество для каждого собственника
+        json outputJson = json::array();
+        for (const Owner& owner : owners) {
+            double totalPropertyTax = owner.calculateTotalPropertyTax();
+            json ownerJson = owner.toJson();
+            ownerJson["total_property_tax"] = totalPropertyTax;
+            outputJson.push_back(ownerJson);
+        }
+
+        // Запись результатов в выходной JSON-файл
+        std::ofstream outputFile(outputFileName);
+        outputFile << outputJson.dump(2);
+        outputFile.close();
+
+        std::cout << "Результаты сохранены в файл " << outputFileName << std::endl;
+    }
+};
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        std::cerr << "Использование: " << argv[0] << " <входной JSON-файл> <выходной JSON-файл>" << std::endl;
+        return 1;
+    }
+
+    const std::string inputFileName = argv[1];
+    const std::string outputFileName = argv[2];
+
+    TaxService::calculateTaxes(inputFileName, outputFileName);
+
+    return 0;
+}
+
+
+________________________________________________________________________
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include "pugixml.hpp"
+
+using namespace pugi;
+
+// Ваши классы Property, Apartment, Car, CountryHouse, Owner, PropertyFactoryMethod...
+class IXmlIO {
+public:
+    virtual void fromXml(const xml_node& node) = 0;
+    virtual void toXml(xml_node& node) const = 0;
+    virtual ~IXmlIO() {}
+};
+
+// Класс PropertyFactoryMethod остается без изменений
+
+class Owner : public IXmlIO {
+    // ... Ваши данные и методы ...
+public:
+    void fromXml(const xml_node& node) override {
+        // Реализуйте считывание данных из XML-узла
+    }
+
+    void toXml(xml_node& node) const override {
+        // Реализуйте запись данных в XML-узел
+    }
+};
+
+class TaxService {
+public:
+    static void loadXmlData(const std::string& fileName, std::vector<Owner>& owners) {
+        // Реализуйте загрузку данных из XML-файла
+    }
+
+    static void saveXmlData(const std::string& fileName, const std::vector<Owner>& owners) {
+        // Реализуйте сохранение данных в XML-файл
+    }
+};
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        std::cerr << "Использование: " << argv[0] << " <входной XML-файл> <выходной XML-файл>" << std::endl;
+        return 1;
+    }
+
+    const std::string inputFileName = argv[1];
+    const std::string outputFileName = argv[2;
+
+    std::vector<Owner> owners;
+    TaxService::loadXmlData(inputFileName, owners);
+
+    // Выполните вычисления и обработку данных, если это необходимо
+
+    TaxService::saveXmlData(outputFileName, owners);
+
+    return 0;
+}
+
+________________________________________________________________________
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include "nlohmann/json.hpp"
+#include "pugixml.hpp"
+
+using json = nlohmann::json;
+using namespace pugi;
+
+// Ваши классы Property, Apartment, Car, CountryHouse, Owner, PropertyFactoryMethod...
+class IJsonIO {
+public:
+    virtual void fromJson(const json& jsonObject) = 0;
+    virtual json toJson() const = 0;
+    virtual ~IJsonIO() {}
+};
+
+class IXmlIO {
+public:
+    virtual void fromXml(const xml_node& node) = 0;
+    virtual void toXml(xml_node& node) const = 0;
+    virtual ~IXmlIO() {}
+};
+
+// Класс PropertyFactoryMethod остается без изменений
+
+class Owner : public IJsonIO, public IXmlIO {
+    // ... Ваши данные и методы ...
+public:
+    void fromJson(const json& jsonObject) override {
+        // Реализуйте считывание данных из JSON-объекта
+    }
+
+    json toJson() const override {
+        // Реализуйте запись данных в JSON-объект
+    }
+
+    void fromXml(const xml_node& node) override {
+        // Реализуйте считывание данных из XML-узла
+    }
+
+    void toXml(xml_node& node) const override {
+        // Реализуйте запись данных в XML-узел
+    }
+};
+
+class TaxService {
+public:
+    static void loadJsonData(const std::string& fileName, std::vector<Owner>& owners) {
+        // Реализуйте загрузку данных из JSON-файла
+    }
+
+    static void saveJsonData(const std::string& fileName, const std::vector<Owner>& owners) {
+        // Реализуйте сохранение данных в JSON-файл
+    }
+
+    static void loadXmlData(const std::string& fileName, std::vector<Owner>& owners) {
+        // Реализуйте загрузку данных из XML-файла
+    }
+
+    static void saveXmlData(const std::string& fileName, const std::vector<Owner>& owners) {
+        // Реализуйте сохранение данных в XML-файл
+    }
+};
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        std::cerr << "Использование: " << argv[0] << " <входной файл> <выходной файл>" << std::endl;
+        return 1;
+    }
+
+    const std::string inputFileName = argv[1];
+    const std::string outputFileName = argv[2];
+
+    std::vector<Owner> owners;
+
+    if (inputFileName.find(".json") != std::string::npos) {
+        TaxService::loadJsonData(inputFileName, owners);
+    } else if (inputFileName.find(".xml") != std::string::npos) {
+        TaxService::loadXmlData(inputFileName, owners);
+    } else {
+        std::cerr << "Неподдерживаемый формат файла: " << inputFileName << std::endl;
+        return 1;
+    }
+
+    // Выполните вычисления и обработку данных, если это необходимо
+
+    if (outputFileName.find(".json") != std::string::npos) {
+        TaxService::saveJsonData(outputFileName, owners);
+    } else if (outputFileName.find(".xml") != std::string::npos) {
+        TaxService::saveXmlData(outputFileName, owners);
+    } else {
+        std::cerr << "Неподдерживаемый формат файла: " << outputFileName << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
+________________________________________________________________________

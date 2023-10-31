@@ -1,3 +1,5 @@
+#ifndef OWNER_H
+#define OWNER_
 #include <iostream>
 #include <string>
 #include <vector>
@@ -105,3 +107,5 @@ void Owner::showAllProperties(){
         cout << "- Worth: $" << property->getWorth() << endl;
     } 
 };
+
+#endif
