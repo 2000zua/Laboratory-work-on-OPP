@@ -605,3 +605,140 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 ________________________________________________________________________
+
+    Owner owner1("Иванов Иван Иванович", 123456789012);
+    Apartment apartment1(100000, 80);
+    Car car1(20000, 150);
+    CountryHouse countryHouse1(300000, 30);
+    owner1.addProperty(&apartment1);
+    owner1.addProperty(&car1);
+    owner1.addProperty(&countryHouse1);
+
+    Owner owner2("Петров Петр Петрович", 987654321012);
+    Apartment apartment2(150000, 120);
+    Car car2(30000, 200);
+    CountryHouse countryHouse2(500000, 50);
+    owner2.addProperty(&apartment2);
+    owner2.addProperty(&car2);
+    owner2.addProperty(&countryHouse2);
+
+    Owner owner3("Сидоров Сидор Сидорович", 567890123456);
+    Apartment apartment3(120000, 100);
+    Car car3(25000, 180);
+    CountryHouse countryHouse3(400000, 40);
+    owner3.addProperty(&apartment3);
+    owner3.addProperty(&car3);
+    owner3.addProperty(&countryHouse3);
+
+    std::vector<Owner> owners = {owner1, owner2, owner3};
+
+    while (true) {
+        std::cout << "\nList of owners:" << std::endl;
+        for (int i = 0; i < owners.size(); i++) {
+            std::cout << i + 1 << ". " << owners[i].fullName << std::endl;
+        }
+
+        std::cout << "\nChoose an owner (1, 2, 3), 'A' to add a new owner, 'Q' to exit: ";
+        std::string choice;
+        std::cin >> choice;
+
+        if (choice == "Q" || choice == "q") {
+            break;
+        }
+
+        if (choice == "A" || choice == "a") {
+            std::string fullName;
+            std::cout << "Enter owner's full name: ";
+            std::cin.ignore();
+            std::getline(std::cin, fullName);
+            long long inn;
+            std::cout << "Enter INN (12 digits): ";
+            std::cin >> inn;
+            Owner newOwner(fullName, inn);
+            owners.push_back(newOwner);
+            std::cout << "Owner " << fullName << " added." << std::endl;
+        }
+        else {
+            try {
+                int ownerIndex = std::stoi(choice) - 1;
+                if (ownerIndex >= 0 && ownerIndex < owners.size()) {
+                    Owner& owner = owners[ownerIndex];
+
+                    std::cout << "\nOwner's properties:" << std::endl;
+                    for (int i = 0; i < owner.properties.size(); i++) {
+                        std::cout << i + 1 << ". Worth: " << owner.properties[i]->worth << std::endl;
+                    }
+
+                    std::cout << "Choose a property to manage (1, 2, 3), 'A' to add a new property, 'D' to delete: ";
+                    std::string propertyChoice;
+                    std::cin >> propertyChoice;
+
+                    if (propertyChoice == "A" || propertyChoice == "a") {
+                        int worth;
+                        std::cout << "Enter property worth: ";
+                        std::cin >> worth;
+                        std::cout << "Enter property type (A - Apartment, C - Car, H - CountryHouse): ";
+                        std::string propertyType;
+                        std::cin >> propertyType;
+
+                        Property* newProperty = nullptr;
+
+                        if (propertyType == "A" || propertyType == "a") {
+                            int square;
+                            std::cout << "Enter apartment square: ";
+                            std::cin >> square;
+                            newProperty = new Apartment(worth, square);
+                        }
+                        else if (propertyType == "C" || propertyType == "c") {
+                            int horsepower;
+                            std::cout << "Enter car horsepower: ";
+                            std::cin >> horsepower;
+                            newProperty = new Car(worth, horsepower);
+                        }
+                        else if (propertyType == "H" || propertyType == "h") {
+                            int distanceFromCity;
+                            std::cout << "Enter country house distance from the city: ";
+                            std::cin >> distanceFromCity;
+                            newProperty = new CountryHouse(worth, distanceFromCity);
+                        }
+                        else {
+                            std::cout << "Invalid property type. Property not added." << std::endl;
+                            continue;
+                        }
+
+                        owner.addProperty(newProperty);
+                        std::cout << "Property added." << std::endl;
+                    }
+                    else if (propertyChoice == "D" || propertyChoice == "d") {
+                        int propertyIndex;
+                        std::cout << "Enter the property number to delete: ";
+                        std::cin >> propertyIndex;
+                        if (propertyIndex > 0 && propertyIndex <= owner.properties.size()) {
+                            Property* property = owner.properties[propertyIndex - 1];
+                            owner.removeProperty(property);
+                            delete property;
+                            std::cout << "Property deleted." << std::endl;
+                        }
+                        else {
+                            std::cout << "Invalid property number. Deletion not performed." << std::endl;
+                        }
+                    }
+                    else {
+                        std::cout << "Invalid choice. Please try again." << std::endl;
+                    }
+                }
+                else {
+                    std::cout << "Invalid choice. Please try again." << std::endl;
+                }
+            }
+            catch (std::invalid_argument&) {
+                std::cout << "Invalid choice. Please try again." << std::endl;
+            }
+        }
+    }
+
+    for (Owner& owner : owners) {
+        for (Property* property : owner.properties) {
+            delete property;
+        }
+    }
