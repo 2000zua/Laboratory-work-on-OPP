@@ -3,14 +3,9 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
 
-class IJsonIO {
-public:
-    virtual void fromJson(const json& jsonObject) = 0;
-    virtual json toJson() const = 0;
-    virtual ~IJsonIO() {}
-};
+
+
 
 class Property : public IJsonIO {
 protected:
@@ -25,17 +20,7 @@ public:
         return 0.13 * worth;
     }
 
-    virtual void fromJson(const json& jsonObject) {
-        worth = jsonObject["worth"];
-    }
 
-    virtual json toJson() const {
-        return {
-            {"worth", worth},
-            {"property_tax", calculatePropertyTax()},
-            {"income_tax", calculateIncomeTax()}
-        };
-    }
 };
 
 class Apartment : public Property {
@@ -49,16 +34,7 @@ public:
         return 0.02 * square;
     }
 
-    void fromJson(const json& jsonObject) override {
-        Property::fromJson(jsonObject);
-        square = jsonObject["square"];
-    }
 
-    json toJson() const override {
-        json propertyJson = Property::toJson();
-        propertyJson["square"] = square;
-        return propertyJson;
-    }
 };
 
 class Car : public Property {
@@ -72,16 +48,7 @@ public:
         return 0.05 * horsepower;
     }
 
-    void fromJson(const json& jsonObject) override {
-        Property::fromJson(jsonObject);
-        horsepower = jsonObject["horsepower"];
-    }
 
-    json toJson() const override {
-        json propertyJson = Property::toJson();
-        propertyJson["horsepower"] = horsepower;
-        return propertyJson;
-    }
 };
 
 class CountryHouse : public Property {
@@ -95,16 +62,7 @@ public:
         return 0.01 * distanceFromCity;
     }
 
-    void fromJson(const json& jsonObject) override {
-        Property::fromJson(jsonObject);
-        distanceFromCity = jsonObject["distanceFromCity"];
-    }
 
-    json toJson() const override {
-        json propertyJson = Property::toJson();
-        propertyJson["distanceFromCity"] = distanceFromCity;
-        return propertyJson;
-    }
 };
 
 class Owner : public IJsonIO {
@@ -145,45 +103,7 @@ public:
         return totalTax;
     }
 
-    void fromJson(const json& jsonObject) override {
-        fullName = jsonObject["fullName"];
-        inn = jsonObject["inn"];
-        properties.clear();
 
-        const json& propertiesArray = jsonObject["properties"];
-        for (const json& propertyJson : propertiesArray) {
-            std::string propertyType = propertyJson["type"];
-            if (propertyType == "Apartment") {
-                Apartment* apartment = new Apartment(0, 0);
-                apartment->fromJson(propertyJson);
-                properties.push_back(apartment);
-            } else if (propertyType == "Car") {
-                Car* car = new Car(0, 0);
-                car->fromJson(propertyJson);
-                properties.push_back(car);
-            } else if (propertyType == "CountryHouse") {
-                CountryHouse* countryHouse = new CountryHouse(0, 0);
-                countryHouse->fromJson(propertyJson);
-                properties.push_back(countryHouse);
-            }
-        }
-    }
-
-    json toJson() const override {
-        json ownerJson = {
-            {"fullName", fullName},
-            {"inn", inn},
-            {"total_property_tax", calculateTotalPropertyTax()},
-            {"properties", json::array()}
-        };
-
-        json& propertiesArray = ownerJson["properties"];
-        for (const Property* property : properties) {
-            propertiesArray.push_back(property->toJson());
-        }
-
-        return ownerJson;
-    }
 
     ~Owner() {
         for (Property* property : properties) {
@@ -248,19 +168,7 @@ class CountryHouse : public Property {
 };
 ________________________________________________________________________
 
-class PropertyFactoryMethod {
-public:
-    static Property* getProperty(const std::string& key) {
-        if (key == "Apartment") {
-            return new Apartment(0, 0);
-        } else if (key == "Car") {
-            return new Car(0, 0);
-        } else if (key == "CountryHouse") {
-            return new CountryHouse(0, 0);
-        }
-        return nullptr; // Handle unknown property type
-    }
-};
+
 
 
 ________________________________________________________________________
@@ -395,37 +303,7 @@ using json = nlohmann::json;
 
 class TaxService {
 public:
-    static void calculateTaxes(const std::string& inputFileName, const std::string& outputFileName) {
-        // Загрузка JSON-данных из входного файла
-        json inputJson;
-        std::ifstream inputFile(inputFileName);
-        inputFile >> inputJson;
-        inputFile.close();
 
-        // Создание объектов Owner из входного JSON
-        std::vector<Owner> owners;
-        for (const auto& ownerJson : inputJson) {
-            Owner owner("Default Name", "000000000000");
-            owner.fromJson(ownerJson);
-            owners.push_back(owner);
-        }
-
-        // Расчет общего налога на имущество для каждого собственника
-        json outputJson = json::array();
-        for (const Owner& owner : owners) {
-            double totalPropertyTax = owner.calculateTotalPropertyTax();
-            json ownerJson = owner.toJson();
-            ownerJson["total_property_tax"] = totalPropertyTax;
-            outputJson.push_back(ownerJson);
-        }
-
-        // Запись результатов в выходной JSON-файл
-        std::ofstream outputFile(outputFileName);
-        outputFile << outputJson.dump(2);
-        outputFile.close();
-
-        std::cout << "Результаты сохранены в файл " << outputFileName << std::endl;
-    }
 };
 
 int main(int argc, char *argv[]) {
@@ -552,24 +430,6 @@ public:
     }
 };
 
-class TaxService {
-public:
-    static void loadJsonData(const std::string& fileName, std::vector<Owner>& owners) {
-        // Реализуйте загрузку данных из JSON-файла
-    }
-
-    static void saveJsonData(const std::string& fileName, const std::vector<Owner>& owners) {
-        // Реализуйте сохранение данных в JSON-файл
-    }
-
-    static void loadXmlData(const std::string& fileName, std::vector<Owner>& owners) {
-        // Реализуйте загрузку данных из XML-файла
-    }
-
-    static void saveXmlData(const std::string& fileName, const std::vector<Owner>& owners) {
-        // Реализуйте сохранение данных в XML-файл
-    }
-};
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
@@ -605,140 +465,3 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 ________________________________________________________________________
-
-    Owner owner1("Иванов Иван Иванович", 123456789012);
-    Apartment apartment1(100000, 80);
-    Car car1(20000, 150);
-    CountryHouse countryHouse1(300000, 30);
-    owner1.addProperty(&apartment1);
-    owner1.addProperty(&car1);
-    owner1.addProperty(&countryHouse1);
-
-    Owner owner2("Петров Петр Петрович", 987654321012);
-    Apartment apartment2(150000, 120);
-    Car car2(30000, 200);
-    CountryHouse countryHouse2(500000, 50);
-    owner2.addProperty(&apartment2);
-    owner2.addProperty(&car2);
-    owner2.addProperty(&countryHouse2);
-
-    Owner owner3("Сидоров Сидор Сидорович", 567890123456);
-    Apartment apartment3(120000, 100);
-    Car car3(25000, 180);
-    CountryHouse countryHouse3(400000, 40);
-    owner3.addProperty(&apartment3);
-    owner3.addProperty(&car3);
-    owner3.addProperty(&countryHouse3);
-
-    std::vector<Owner> owners = {owner1, owner2, owner3};
-
-    while (true) {
-        std::cout << "\nList of owners:" << std::endl;
-        for (int i = 0; i < owners.size(); i++) {
-            std::cout << i + 1 << ". " << owners[i].fullName << std::endl;
-        }
-
-        std::cout << "\nChoose an owner (1, 2, 3), 'A' to add a new owner, 'Q' to exit: ";
-        std::string choice;
-        std::cin >> choice;
-
-        if (choice == "Q" || choice == "q") {
-            break;
-        }
-
-        if (choice == "A" || choice == "a") {
-            std::string fullName;
-            std::cout << "Enter owner's full name: ";
-            std::cin.ignore();
-            std::getline(std::cin, fullName);
-            long long inn;
-            std::cout << "Enter INN (12 digits): ";
-            std::cin >> inn;
-            Owner newOwner(fullName, inn);
-            owners.push_back(newOwner);
-            std::cout << "Owner " << fullName << " added." << std::endl;
-        }
-        else {
-            try {
-                int ownerIndex = std::stoi(choice) - 1;
-                if (ownerIndex >= 0 && ownerIndex < owners.size()) {
-                    Owner& owner = owners[ownerIndex];
-
-                    std::cout << "\nOwner's properties:" << std::endl;
-                    for (int i = 0; i < owner.properties.size(); i++) {
-                        std::cout << i + 1 << ". Worth: " << owner.properties[i]->worth << std::endl;
-                    }
-
-                    std::cout << "Choose a property to manage (1, 2, 3), 'A' to add a new property, 'D' to delete: ";
-                    std::string propertyChoice;
-                    std::cin >> propertyChoice;
-
-                    if (propertyChoice == "A" || propertyChoice == "a") {
-                        int worth;
-                        std::cout << "Enter property worth: ";
-                        std::cin >> worth;
-                        std::cout << "Enter property type (A - Apartment, C - Car, H - CountryHouse): ";
-                        std::string propertyType;
-                        std::cin >> propertyType;
-
-                        Property* newProperty = nullptr;
-
-                        if (propertyType == "A" || propertyType == "a") {
-                            int square;
-                            std::cout << "Enter apartment square: ";
-                            std::cin >> square;
-                            newProperty = new Apartment(worth, square);
-                        }
-                        else if (propertyType == "C" || propertyType == "c") {
-                            int horsepower;
-                            std::cout << "Enter car horsepower: ";
-                            std::cin >> horsepower;
-                            newProperty = new Car(worth, horsepower);
-                        }
-                        else if (propertyType == "H" || propertyType == "h") {
-                            int distanceFromCity;
-                            std::cout << "Enter country house distance from the city: ";
-                            std::cin >> distanceFromCity;
-                            newProperty = new CountryHouse(worth, distanceFromCity);
-                        }
-                        else {
-                            std::cout << "Invalid property type. Property not added." << std::endl;
-                            continue;
-                        }
-
-                        owner.addProperty(newProperty);
-                        std::cout << "Property added." << std::endl;
-                    }
-                    else if (propertyChoice == "D" || propertyChoice == "d") {
-                        int propertyIndex;
-                        std::cout << "Enter the property number to delete: ";
-                        std::cin >> propertyIndex;
-                        if (propertyIndex > 0 && propertyIndex <= owner.properties.size()) {
-                            Property* property = owner.properties[propertyIndex - 1];
-                            owner.removeProperty(property);
-                            delete property;
-                            std::cout << "Property deleted." << std::endl;
-                        }
-                        else {
-                            std::cout << "Invalid property number. Deletion not performed." << std::endl;
-                        }
-                    }
-                    else {
-                        std::cout << "Invalid choice. Please try again." << std::endl;
-                    }
-                }
-                else {
-                    std::cout << "Invalid choice. Please try again." << std::endl;
-                }
-            }
-            catch (std::invalid_argument&) {
-                std::cout << "Invalid choice. Please try again." << std::endl;
-            }
-        }
-    }
-
-    for (Owner& owner : owners) {
-        for (Property* property : owner.properties) {
-            delete property;
-        }
-    }
