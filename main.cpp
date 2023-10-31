@@ -23,34 +23,6 @@ int main()
 {
     vector<Owner> owners;
 
-    Owner owner1("Angelo Abreu Zua", 458);
-    Owner owner2("Michael Jackson", 643);
-    Owner owner3("Nelsom Mandela", 243);
-
-    Apartment apartment1(190, 80.0);
-    Apartment apartment2(250, 110.0);
-
-    Car car1(320, 85.0);
-    Car car2(430, 110.0);
-
-    CountryHouse house1(900, 50.0);
-    CountryHouse house2(1000, 90.0);
-
-    owner1.addProperty(&apartment1);
-    owner1.addProperty(&car1);
-    owner1.addProperty(&house1);
-
-    owner2.addProperty(&apartment2);
-    owner2.addProperty(&car2);
-    owner2.addProperty(&house2);
-
-    owner3.addProperty(&apartment2);
-
-
-    owners.push_back(owner1);
-    owners.push_back(owner2);
-    owners.push_back(owner3);
-
     while (true)
     {
        startScream()
@@ -149,6 +121,38 @@ int main()
         cout << " Total Property Tax: $" << totalPropertyTax << std::endl;
     }
 
+    std::string inputFileName, outputFileName;
+    std::cout << "Введите имя входного JSON-файла: ";
+    std::cin >> inputFileName;
+    std::cout << "Введите имя выходного JSON-файла: ";
+    std::cin >> outputFileName;
+
+    // Загрузка JSON-данных из входного файла
+    json inputJson;
+    std::ifstream inputFile(inputFileName);
+    inputFile >> inputJson;
+    inputFile.close();
+
+    // Создание и заполнение объекта Owner из входного JSON
+    Owner owner("Default Name", "000000000000");
+    owner.fromJson(inputJson);
+
+    // Расчет общего налога на имущество
+    double totalPropertyTax = owner.calculateTotalPropertyTax();
+
+    // Создание JSON-объекта для хранения результатов
+    json outputJson = owner.toJson();
+    outputJson["total_property_tax"] = totalPropertyTax;
+
+    // Запись результатов в выходной JSON-файл
+    std::ofstream outputFile(outputFileName);
+    outputFile << outputJson.dump(2);
+    outputFile.close();
+
+    std::cout << "Результаты сохранены в файл " << outputFileName << std::endl;
+
+
+    
     return 0;
 }
 
