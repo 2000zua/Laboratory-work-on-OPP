@@ -6,7 +6,7 @@
 
 using namespace std;
 
-class Property
+class Property : public IJsonIO
 {
 protected:
     double worth; // valor da propriedade
@@ -18,7 +18,20 @@ public:
     double calculateIncomeTax();
 
     void setWorth(double _worth);
+    
     double getWorth();
+
+        virtual void fromJson(const json& jsonObject) {
+        worth = jsonObject["worth"];
+    }
+
+    virtual json toJson() const {
+        return {
+            {"worth", worth},
+            {"property_tax", calculatePropertyTax()},
+            {"income_tax", calculateIncomeTax()}
+        };
+    }
     
 };
 

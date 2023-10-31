@@ -7,7 +7,7 @@
 
 using namespace std;
 
-class Owner
+class Owner : public IJsonIO
 {
 protected:
     string fullName;
@@ -35,6 +35,45 @@ public:
 
     //mostrar todas as propriedades do proprietario
     void showAllProperties();
+
+    void fromJson(const json& jsonObject) override {
+        fullName = jsonObject["fullName"];
+        inn = jsonObject["inn"];
+        properties.clear();
+
+        const json& propertiesArray = jsonObject["properties"];
+        for (const json& propertyJson : propertiesArray) {
+            std::string propertyType = propertyJson["type"];
+            if (propertyType == "Apartment") {
+                Apartment* apartment = new Apartment(0, 0);
+                apartment->fromJson(propertyJson);
+                properties.push_back(apartment);
+            } else if (propertyType == "Car") {
+                Car* car = new Car(0, 0);
+                car->fromJson(propertyJson);
+                properties.push_back(car);
+            } else if (propertyType == "CountryHouse") {
+                CountryHouse* countryHouse = new CountryHouse(0, 0);
+                countryHouse->fromJson(propertyJson);
+                properties.push_back(countryHouse);
+            }
+        }
+    }
+
+    json toJson() const override {
+        json ownerJson = {
+            {"fullName", fullName},
+            {"inn", inn},
+            {"total_property_tax", calculateTotalPropertyTax()},
+            {"properties", json::array()}
+        };
+
+        json& propertiesArray = ownerJson["properties"];
+        for (const Property* property : properties) {
+            propertiesArray.push_back(property->toJson());
+        }
+        return ownerJson;
+    }
 
     ~Owner();
 

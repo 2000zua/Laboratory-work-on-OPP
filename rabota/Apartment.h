@@ -20,8 +20,19 @@ public:
             return Property::worth*TAX_RATES::APPARTMENT_LUXURY_TAX;
         }
     }
+    
+    void fromJson(const json& jsonObject) override {
+        Property::fromJson(jsonObject);
+        square = jsonObject["square"];
+    }
+
+    json toJson() const override {
+        json propertyJson = Property::toJson();
+        propertyJson["square"] = square;
+        return propertyJson;
+    }
 
 };
 
-//Apartment::Apartment(double _worth, double _square) 
+
 
