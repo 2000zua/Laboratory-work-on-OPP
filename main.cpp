@@ -142,7 +142,7 @@ int main()
         break;
     }
 
-    // Calculate and display total property tax for each owner
+
     for (const Owner& owner : owners) {
         double totalPropertyTax = owner.calculateTotalPropertyTax();
         cout << "Owner: " << owner.getFullName() << " (INN: " << owner.getINN() << ")";
