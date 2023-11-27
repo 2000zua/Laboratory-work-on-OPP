@@ -24,18 +24,8 @@ public:
                 return Property::worth*TAX_RATES::CAR_TRUCK_TAX;
            }
         }
-    }
+    };
 
-    void fromJson(const json& jsonObject) override {
-        Property::fromJson(jsonObject);
-        horsepower = jsonObject["horsepower"];
-    }
-
-    json toJson() const override {
-        json propertyJson = Property::toJson();
-        propertyJson["horsepower"] = horsepower;
-        return propertyJson;
-    }
 
     double getHorsepower();
     void setHorsepower(double _horsepower);

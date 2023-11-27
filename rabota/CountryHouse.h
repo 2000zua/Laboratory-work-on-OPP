@@ -19,16 +19,6 @@ public:
             return Property::worth*TAX_RATES::HIGHT_COUNTRY_HOUSE_TAX;
         }
     }
-    void fromJson(const json& jsonObject) override {
-        Property::fromJson(jsonObject);
-        distanceFromCity = jsonObject["distanceFromCity"];
-    }
-
-    json toJson() const override {
-        json propertyJson = Property::toJson();
-        propertyJson["distanceFromCity"] = distanceFromCity;
-        return propertyJson;
-    }
 
     void setDistanceFromCity(double _distance);
 

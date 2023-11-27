@@ -25,7 +25,7 @@ int main()
 
     while (true)
     {
-       startScream()
+       startScream();
         int choice;
         std::cin >> choice;
 
@@ -115,43 +115,13 @@ int main()
     }
 
 
-    for (const Owner& owner : owners) {
+    for (Owner& owner : owners) {
         double totalPropertyTax = owner.calculateTotalPropertyTax();
-        cout << "Owner: " << owner.getFullName() << " (INN: " << owner.getINN() << ")";
+        cout << "Owner: " << owner.fullName << " (INN: " << owner.INN << ")";
         cout << " Total Property Tax: $" << totalPropertyTax << std::endl;
     }
 
-    std::string inputFileName, outputFileName;
-    std::cout << "Введите имя входного JSON-файла: ";
-    std::cin >> inputFileName;
-    std::cout << "Введите имя выходного JSON-файла: ";
-    std::cin >> outputFileName;
-
-    // Загрузка JSON-данных из входного файла
-    json inputJson;
-    std::ifstream inputFile(inputFileName);
-    inputFile >> inputJson;
-    inputFile.close();
-
-    // Создание и заполнение объекта Owner из входного JSON
-    Owner owner("Default Name", "000000000000");
-    owner.fromJson(inputJson);
-
-    // Расчет общего налога на имущество
-    double totalPropertyTax = owner.calculateTotalPropertyTax();
-
-    // Создание JSON-объекта для хранения результатов
-    json outputJson = owner.toJson();
-    outputJson["total_property_tax"] = totalPropertyTax;
-
-    // Запись результатов в выходной JSON-файл
-    std::ofstream outputFile(outputFileName);
-    outputFile << outputJson.dump(2);
-    outputFile.close();
-
-    std::cout << "Результаты сохранены в файл " << outputFileName << std::endl;
-
-
+ 
     
     return 0;
 }

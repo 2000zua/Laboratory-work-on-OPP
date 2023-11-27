@@ -1,9 +1,10 @@
 #include <iostream>
 #include "Property.h"
+#include "tax_rates.h"
 
 using namespace std;
 
-class Apartment :public Property
+class Apartment : public Property
 {
 protected:
     double square;
@@ -20,17 +21,7 @@ public:
             return Property::worth*TAX_RATES::APPARTMENT_LUXURY_TAX;
         }
     }
-    
-    void fromJson(const json& jsonObject) override {
-        Property::fromJson(jsonObject);
-        square = jsonObject["square"];
-    }
 
-    json toJson() const override {
-        json propertyJson = Property::toJson();
-        propertyJson["square"] = square;
-        return propertyJson;
-    }
 
 };
 
